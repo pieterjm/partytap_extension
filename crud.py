@@ -1,155 +1,157 @@
 from datetime import datetime, timezone
 from typing import Optional
 
+import shortuuid
+
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
 
 from .models import (
-    Bitcoinswitch,
-    BitcoinswitchPayment,
-    CreateBitcoinswitch,
+    Device,
+    PartytapPayment,
+    CreateDevice,
 )
 
-db = Database("ext_bitcoinswitch")
+db = Database("ext_partytap")
 
 
-async def create_bitcoinswitch(
-    bitcoinswitch_id: str,
-    data: CreateBitcoinswitch,
-) -> Bitcoinswitch:
-    bitcoinswitch_key = urlsafe_short_hash()
-    device = Bitcoinswitch(
-        id=bitcoinswitch_id,
-        key=bitcoinswitch_key,
+async def create_device(
+    device_id: str,
+    data: CreateDevice,
+) -> Device:
+    device_key = urlsafe_short_hash()
+    device = CreateDevice(
+        id=device_id,
+        key=device_key,
         title=data.title,
         wallet=data.wallet,
         currency=data.currency,
-        switches=data.switches,
-        password=data.password,
+        branding=data.branding,
+        switches=data.switches
     )
-    await db.insert("bitcoinswitch.switch", device)
+    await db.insert("partytap.device", device)
     return device
 
 
-async def update_bitcoinswitch(device: Bitcoinswitch) -> Bitcoinswitch:
-    device.updated_at = datetime.now(timezone.utc)
-    await db.update("bitcoinswitch.switch", device)
+async def update_device(device: Device) -> Device:
+    await db.update("partytap.device", device)
     return device
 
 
-async def get_bitcoinswitch(bitcoinswitch_id: str) -> Optional[Bitcoinswitch]:
+async def get_device(device_id: str) -> Optional[Device]:
     return await db.fetchone(
-        "SELECT * FROM bitcoinswitch.switch WHERE id = :id",
-        {"id": bitcoinswitch_id},
-        Bitcoinswitch,
+        "SELECT * FROM partytap.device WHERE id = :id",
+        {"id": device_id},
+        Device,
     )
 
 
-async def get_bitcoinswitches(wallet_ids: list[str]) -> list[Bitcoinswitch]:
+async def get_devices(wallet_ids: list[str]) -> list[Device]:
     q = ",".join([f"'{w}'" for w in wallet_ids])
     return await db.fetchall(
         f"""
-        SELECT * FROM bitcoinswitch.switch WHERE wallet IN ({q})
+        SELECT * FROM partytap.device WHERE wallet IN ({q})
         ORDER BY id
         """,
-        model=Bitcoinswitch,
+        model=Device,
     )
 
 
-async def delete_bitcoinswitch(bitcoinswitch_id: str) -> None:
+async def delete_device(device_id: str) -> None:
     await db.execute(
-        "DELETE FROM bitcoinswitch.switch WHERE id = :id",
-        {"id": bitcoinswitch_id},
+        "DELETE FROM partytap.device WHERE id = :id",
+        {"id": device_id},
     )
 
 
-async def create_bitcoinswitch_payment(
-    bitcoinswitch_id: str,
+async def create_partytap_payment(
+    device_id: str,
+    switch_id: str,
     payment_hash: str,
     payload: str,
-    pin: int,
-    amount_msat: int = 0,
-) -> BitcoinswitchPayment:
-    bitcoinswitchpayment_id = urlsafe_short_hash()
-    payment = BitcoinswitchPayment(
-        id=bitcoinswitchpayment_id,
-        bitcoinswitch_id=bitcoinswitch_id,
+    sats: int,
+    pin: str
+) -> PartytapPayment:
+    payment_id = urlsafe_short_hash()
+    payment = PartytapPayment(
+        id=payment_id,
+        device_id=device_id,
+        switch_id=switch_id,
         payload=payload,
         pin=pin,
         payment_hash=payment_hash,
-        sats=amount_msat,
+        sats=sats
     )
-    await db.insert("bitcoinswitch.payment", payment)
+    await db.insert("partytap.payment", payment)
     return payment
 
 
-async def update_bitcoinswitch_payment(
-    bitcoinswitch_payment: BitcoinswitchPayment,
-) -> BitcoinswitchPayment:
-    bitcoinswitch_payment.updated_at = datetime.now(timezone.utc)
-    await db.update("bitcoinswitch.payment", bitcoinswitch_payment)
-    return bitcoinswitch_payment
+async def update_partytap_payment(
+    payment: PartytapPayment,
+) -> PartytapPayment:
+    await db.update("device.payment", payment)
+    return payment
 
 
-async def delete_bitcoinswitch_payment(bitcoinswitch_payment_id: str) -> None:
+async def delete_partytap_payment(payment_id: str) -> None:
     await db.execute(
-        "DELETE FROM bitcoinswitch.payment WHERE id = :id",
-        {"id": bitcoinswitch_payment_id},
+        "DELETE FROM partytap.payment WHERE id = :id",
+        {"id": payment_id},
     )
 
 
-async def get_bitcoinswitch_payment(
-    bitcoinswitchpayment_id: str,
-) -> Optional[BitcoinswitchPayment]:
+async def get_partytap_payment(
+    payment_id: str,
+) -> Optional[PartytapPayment]:
     return await db.fetchone(
-        "SELECT * FROM bitcoinswitch.payment WHERE id = :id",
-        {"id": bitcoinswitchpayment_id},
-        BitcoinswitchPayment,
+        "SELECT * FROM partytap.payment WHERE id = :id",
+        {"id": payment_id},
+        PartytapPayment,
     )
 
 
-async def get_bitcoinswitch_payments(
-    bitcoinswitch_ids: list[str],
-) -> list[BitcoinswitchPayment]:
-    if len(bitcoinswitch_ids) == 0:
+async def get_partytap_payments(
+    device_ids: list[str],
+) -> list[PartytapPayment]:
+    if len(device_ids) == 0:
         return []
-    q = ",".join([f"'{w}'" for w in bitcoinswitch_ids])
+    q = ",".join([f"'{w}'" for w in device_ids])
     return await db.fetchall(
         f"""
-        SELECT * FROM bitcoinswitch.payment WHERE deviceid IN ({q})
+        SELECT * FROM partytap.payment WHERE deviceid IN ({q})
         ORDER BY id
         """,
-        model=BitcoinswitchPayment,
+        model=PartytapPayment,
     )
 
 
-async def get_bitcoinswitch_payment_by_payhash(
+async def get_partytap_payment_by_payhash(
     payhash: str,
-) -> Optional[BitcoinswitchPayment]:
+) -> Optional[PartytapPayment]:
     return await db.fetchone(
-        "SELECT * FROM bitcoinswitch.payment WHERE payhash = :payhash",
+        "SELECT * FROM partytap.payment WHERE payhash = :payhash",
         {"payhash": payhash},
     )
 
 
-async def get_bitcoinswitch_payment_by_payload(
+async def get_partytap_payment_by_payload(
     payload: str,
-) -> Optional[BitcoinswitchPayment]:
+) -> Optional[PartytapPayment]:
     return await db.fetchone(
-        "SELECT * FROM bitcoinswitch.payment WHERE payload = :payload",
+        "SELECT * FROM partytap.payment WHERE payload = :payload",
         {"payload": payload},
-        BitcoinswitchPayment,
+        PartytapPayment,
     )
 
 
-async def get_recent_bitcoinswitch_payment(
+async def get_recent_partytap_payment(
     payload: str,
-) -> Optional[BitcoinswitchPayment]:
+) -> Optional[PartytapPayment]:
     return await db.fetchone(
         """
-        SELECT * FROM bitcoinswitch.bitcoinswitchpayment
+        SELECT * FROM partytap.payment
         WHERE payload = :payload ORDER BY timestamp DESC LIMIT 1
         """,
         {"payload": payload},
-        BitcoinswitchPayment,
+        PartytapPayment,
     )

@@ -4,16 +4,16 @@ from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
 from lnbits.helpers import template_renderer
 
-bitcoinswitch_generic_router = APIRouter()
+partytap_generic_router = APIRouter()
 
 
-def bitcoinswitch_renderer():
-    return template_renderer(["bitcoinswitch/templates"])
+def partytap_renderer():
+    return template_renderer(["partytap/templates"])
 
 
-@bitcoinswitch_generic_router.get("/", response_class=HTMLResponse)
+@partytap_generic_router.get("/", response_class=HTMLResponse)
 async def index(request: Request, user: User = Depends(check_user_exists)):
-    return bitcoinswitch_renderer().TemplateResponse(
-        "bitcoinswitch/index.html",
+    return partytap_renderer().TemplateResponse(
+        "partytap/index.html",
         {"request": request, "user": user.json()},
     )

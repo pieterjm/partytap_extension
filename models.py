@@ -8,59 +8,35 @@ from pydantic import BaseModel, Field
 
 
 class Switch(BaseModel):
+    id: str
     amount: float = 0.0
     duration: int = 0
-    pin: int = 0
-    comment: bool = False
-    variable: bool = False
-    label: Optional[str] = None
-    lnurl: Optional[str] = None
+    label: Optional[str]
+    lnurl: Optional[str]
 
-    def set_lnurl(self, url: str) -> str:
-        self.lnurl = str(
-            lnurl_encode(
-                url
-                + f"?pin={self.pin}"
-                + f"&amount={self.amount}"
-                + f"&duration={self.duration}"
-                + f"&variable={self.variable}"
-                + f"&comment={self.comment}"
-                + "&disabletime=0"
-            )
-        )
-        return self.lnurl
-
-
-class CreateBitcoinswitch(BaseModel):
+class CreateDevice(BaseModel):
     title: str
     wallet: str
     currency: str
+    branding: str
     switches: list[Switch]
-    password: Optional[str] = None
 
-
-class Bitcoinswitch(BaseModel):
+class Device(BaseModel):
     id: str
-    title: str
-    wallet: str
-    currency: str
     key: str
+    title: str
+    wallet: str
+    currency: str
+    branding: str
     switches: list[Switch]
-    password: Optional[str] = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: str
 
-    @property
-    def lnurlpay_metadata(self) -> LnurlPayMetadata:
-        return LnurlPayMetadata(json.dumps([["text/plain", self.title]]))
-
-
-class BitcoinswitchPayment(BaseModel):
+class PartytapPayment(BaseModel):
     id: str
+    device_id: str
     payment_hash: str
-    bitcoinswitch_id: str
+    switch_id: str
     payload: str
-    pin: int
+    pin: str
     sats: int
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: str

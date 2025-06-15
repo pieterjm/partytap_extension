@@ -131,7 +131,7 @@ window.app = Vue.createApp({
       LNbits.api
         .request(
           'POST',
-          '/bitcoinswitch/api/v1/bitcoinswitch',
+          '/partytap/api/v1/bitcoinswitch',
           wallet,
           updatedData
         )
@@ -154,7 +154,7 @@ window.app = Vue.createApp({
       LNbits.api
         .request(
           'PUT',
-          '/bitcoinswitch/api/v1/bitcoinswitch/' + updatedData.id,
+          '/partytap/api/v1/partytap/' + updatedData.id,
           wallet,
           updatedData
         )
@@ -174,7 +174,7 @@ window.app = Vue.createApp({
       LNbits.api
         .request(
           'GET',
-          '/bitcoinswitch/api/v1/bitcoinswitch',
+          '/partytap/api/v1/bitcoinswitch',
           this.g.user.wallets[0].adminkey
         )
         .then(response => {
@@ -193,7 +193,7 @@ window.app = Vue.createApp({
           LNbits.api
             .request(
               'DELETE',
-              '/bitcoinswitch/api/v1/bitcoinswitch/' + bitcoinswitchId,
+              '/partytap/api/v1/partytap/' + bitcoinswitchId,
               this.g.user.wallets[0].adminkey
             )
             .then(() => {
